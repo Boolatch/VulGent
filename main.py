@@ -25,6 +25,9 @@ supabase: Client = create_client(supabase_url, supabase_key)
 
 app = FastAPI(title="Dummy Company Commerce API")
 
+from customer_part import router as customer_part_router
+app.include_router(customer_part_router)
+
 def parse_document(file_path):
     """Extract document text and pass it through minimal OCR repair."""
     path = Path(file_path)
