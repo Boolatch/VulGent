@@ -1,4 +1,5 @@
-VulGent
+### VulGent ###
+
 VulGent is an AI security lab built around a fictional company. The company has customers, vendors, and internal policies, and the project is building one assistant to help people work with that data. The goal is to turn that setting into short, CTF-style exercises about document trust, access control, and agent tool permissions.
 What’s implemented
 Document ingestion. Extracts text from PDFs, Word documents, spreadsheets, CSVs, text files, and images. Uses OCR where needed and asks Qwen to normalize and classify the text.
