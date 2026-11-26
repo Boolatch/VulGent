@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VulGent — Create Company</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <span class="badge">Company Setup</span>
+      <h1>Create Your Company</h1>
+      <p class="subtitle">
+        Complete your company details. Your registered account will be assigned as the <strong>Owner</strong>.
+      </p>
+
+      <div id="owner-banner" class="owner-banner"></div>
+
+      <form id="company-form">
+        <input type="hidden" id="owner_id" name="owner_id" required />
+
+        <div class="grid">
+          <div class="field full">
+            <label for="name">Company Name *</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+
+          <div class="field full">
+            <label for="legal_name">Legal Name</label>
+            <input type="text" id="legal_name" name="legal_name" />
+          </div>
+
+          <div class="field">
+            <label for="email">Company Email</label>
+            <input type="email" id="email" name="email" />
+          </div>
+
+          <div class="field">
+            <label for="phone_number">Phone Number</label>
+            <input type="tel" id="phone_number" name="phone_number" />
+          </div>
+
+          <div class="field">
+            <label for="industry">Industry</label>
+            <input type="text" id="industry" name="industry" />
+          </div>
+
+          <div class="field">
+            <label for="tax_id">Tax ID</label>
+            <input type="text" id="tax_id" name="tax_id" />
+          </div>
+
+          <div class="field full">
+            <label for="website">Website</label>
+            <input type="url" id="website" name="website" placeholder="https://example.com" />
+          </div>
+
+          <div class="field full">
+            <label for="address">Address</label>
+            <input type="text" id="address" name="address" />
+          </div>
+
+          <div class="field full">
+            <label for="description">Description</label>
+            <textarea id="description" name="description"></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="link-btn" href="/register">Back</a>
+          <button type="submit" id="submit-btn">Create Company</button>
+        </div>
+      </form>
+
+      <div id="status-box" class="status" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const ownerId = params.get("owner_id") || sessionStorage.getItem("pending_company_owner_id") || "";
+    const ownerEmail = params.get("email") || sessionStorage.getItem("pending_company_owner_email") || "";
+
+    const ownerInput = document.getElementById("owner_id");
+    const ownerBanner = document.getElementById("owner-banner");
+    const companyForm = document.getElementById("company-form");
+    const submitBtn = document.getElementById("submit-btn");
+    const statusBox = document.getElementById("status-box");
+
+    ownerInput.value = ownerId;
+
+    if (ownerId) {
+      ownerBanner.textContent = "Creating company for owner user ID: ";
+      const strong = document.createElement("strong");
+      strong.textContent = ownerId;
+      ownerBanner.appendChild(strong);
+      if (ownerEmail) {
+        ownerBanner.appendChild(document.createTextNode(` (${ownerEmail})`));
+      }
+    } else {
+      ownerBanner.textContent = "Missing registered owner ID. Please register first on the registration page.";
+      submitBtn.disabled = true;
+    }
+
+    function showStatus(type, message, payload) {
+      statusBox.className = `status visible ${type}`;
+      statusBox.innerHTML = "";
+
+      const msg = document.createElement("div");
+      msg.textContent = message;
+      statusBox.appendChild(msg);
+
+      if (payload !== undefined) {
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(payload, null, 2);
+        statusBox.appendChild(pre);
+      }
+    }
+
+    companyForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!ownerInput.value) {
+        showStatus("error", "Missing owner user ID. Please register first.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating...";
+      statusBox.className = "status";
+
+      try {
+        const formData = new FormData(companyForm);
+        const response = await fetch("/companies", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          showStatus("error", data.detail || "Failed to create company.", data);
+          return;
+        }
+
+        sessionStorage.removeItem("pending_company_owner_id");
+        sessionStorage.removeItem("pending_company_owner_email");
+        showStatus("success", data.message || "Company created successfully.", data);
+      } catch (err) {
+        showStatus("error", `Network error: ${err.message}`);
+      } finally {
+        if (ownerInput.value) {
+          submitBtn.disabled = false;
+        }
+        submitBtn.textContent = "Create Company";
+      }
+    });
+  </script>
+</body>
+</html>
